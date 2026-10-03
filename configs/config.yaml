@@ -1,0 +1,73 @@
+project:
+  name: "viral"
+  version: "0.1.0"
+  random_seed: 42
+
+
+paths:
+  raw_data_dir: "data/raw"
+  processed_data_dir: "data/processed"
+  features_data_dir: "data/features"
+  models_dir: "models"
+  reports_dir: "reports"
+
+
+database:
+  url: "sqlite:///./data/viral.db"
+  echo_sql: false
+
+
+temporal_windows:
+  # Observation window: Early data collected post-publication
+  observation_window_hours: 6
+  # Prediction window: Future interval in which trending occurs
+  prediction_window_hours: 48
+  # Snapshot interval for calculating acceleration (e.g. 1h -> 3h -> 6h)
+  snapshot_hours: [1, 3, 6]
+
+
+nlp:
+  # VADER thresholds for comment polarity classification
+  vader:
+    pos_threshold: 0.05
+    neg_threshold: -0.05
+  # Lightweight DistilBERT model for contextual sentiment
+  transformer_model: "distilbert/distilbert-base-uncased-finetuned-sst-2-english"
+  batch_size: 64
+  max_comment_length: 256
+  spam_filter:
+    min_length: 3
+    max_repeated_chars: 4
+
+models:
+  primary_metric: "pr_auc"
+  time_split_ratios:
+    train: 0.65
+    validation: 0.15
+    test: 0.20
+  ablation_experiments:
+    exp_a_metadata:
+      include_metadata: true
+      include_engagement: false
+      include_sentiment: false
+      include_nlp_advanced: false
+    exp_b_engagement:
+      include_metadata: true
+      include_engagement: true
+      include_sentiment: false
+      include_nlp_advanced: false
+    exp_c_sentiment:
+      include_metadata: true
+      include_engagement: true
+      include_sentiment: true
+      include_nlp_advanced: false
+    exp_d_full_nlp:
+      include_metadata: true
+      include_engagement: true
+      include_sentiment: true
+      include_nlp_advanced: true
+
+
+mlflow:
+  tracking_uri: "sqlite:///./mlruns.db"
+  experiment_name: "youtube_trending_ablation"
