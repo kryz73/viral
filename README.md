@@ -78,31 +78,61 @@ Predicting video virality or trending status based solely on lifetime view or li
 
 ---
 
+## 🔬 Research Ablation Experiments Suite
+
+A rigorous, peer-reviewed ablation suite designed to isolate, benchmark, and explain the predictive mechanisms of early YouTube video virality. Full mathematical formulations and experiment specifications are detailed in **[docs/ABLATION_EXPERIMENTS.md](docs/ABLATION_EXPERIMENTS.md)**.
+
+| # | Experiment Title | Core Research Question | Setups / Variables | Status |
+|:---:|---|---|---|:---:|
+| **1** | **Temporal Horizon** (Lead-Time Frontier) | *How early can virality be predicted, and what is the trade-off between lead time and accuracy?* | $t \le 1.0\text{h}, 2.0\text{h}, 4.0\text{h}, 6.0\text{h}$ | **Completed** |
+| **2** | **Feature Modality Stack** | *Which data stream contributes the most predictive lift: metadata, creator authority, kinematics, or comments?* | $M_1$ (Meta) $\to M_2$ (+Creator) $\to M_3$ (+Kinematics) $\to M_4$ (+Comments) | **Ready** |
+| **3** | **Kinematic Representations** (Engagement Physics) | *Does modeling derivatives ($v = \frac{dV}{dt}, a = \frac{d^2V}{dt^2}$) outperform raw cumulative counts?* | Raw counts vs. Velocity ($v$) vs. Acceleration ($a$) vs. Growth log-ratios | Planned |
+| **4** | **Dual-Stage Comment Dynamics** & Sentiment Drift | *Does temporal sentiment shift ($\Delta S = S_{6\text{h}} - S_{1\text{h}}$) catch breakout hits better than a static snapshot?* | No text vs. Stage 1 only vs. Stage 2 only vs. Dual-stage drift ($\Delta S$) | Planned |
+| **5** | **Circadian & Multi-Region Contagion** | *Do publisher local circadian time and early overseas charting (GB/AU) boost North American virality prediction?* | UTC baseline vs. Publisher local hour ($\sin/\cos$) vs. Cross-market contagion | Planned |
+| **6** | **Model Architecture Family** | *Which inductive bias best fits early trajectory data: decision trees, recurrent neural nets, or multi-modal transformers?* | Logistic vs. LightGBM/XGBoost vs. Bi-LSTM vs. Late-Fusion Transformer | Planned |
+| **7** | **Content Format Stratification** | *Do YouTube Shorts ($\le 60\text{s}$) and Long-Form videos share the same viral dynamics, or should they be modeled separately?* | Pooled model vs. Dedicated Long-form model vs. Dedicated Shorts model | Planned |
+
+### Experiment 1 Benchmark Results (Completed)
+
+Evaluated on an out-of-time test cohort of **20,234 matched videos** (post-fix clean cohort):
+
+| Horizon | Features | PR-AUC | ROC-AUC | Optimal $F_1$ | Precision | Recall | Median Lead Time |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **$t \le 1.0\text{h}$** | 26 | 0.3299 | 0.9574 | 0.4719 | 37.5% | 63.6% | **7.9 hours** |
+| **$t \le 2.0\text{h}$** | 34 | 0.3467 | 0.9588 | 0.4485 | 37.4% | 56.1% | **7.9 hours** |
+| **$t \le 4.0\text{h}$** | 41 | 0.3321 | 0.9604 | **0.5368** | **41.1%** | **77.3%** | **7.9 hours** |
+| **$t \le 6.0\text{h}$** | 49 | **0.4015** | **0.9664** | 0.5051 | 37.9% | 75.8% | **7.9 hours** |
+
+*See [docs/ABLATION_EXPERIMENTS.md](docs/ABLATION_EXPERIMENTS.md) for full experimental setup, mathematical definitions, and feature breakdown.*
+
+---
+
 ## 🗂 Repository Structure
 
 ```text
-youtube-trending-predictor/
+viral/
 ├── configs/
-│   └── config.yaml              # Central configuration (windows, paths, hyperparameters)
+│   ├── config.yaml              # Central configuration (windows, paths, hyperparameters)
+│   └── seed_channels.json       # 3,500 clean stratified creators (Tiers 1, 2, 3)
 ├── data/
-│   ├── raw/                     # Raw video, comment, and observation records
-│   ├── processed/               # Validated and cleaned records
-│   └── features/                # Tabular feature datasets (Parquet format)
+│   ├── raw/                     # Raw Parquet records (symlinked to harvest data lake)
+│   ├── processed/               # Cleaned & validated trajectory records
+│   └── features/                # Tabular feature datasets
+├── docs/
+│   ├── ABLATION_EXPERIMENTS.md  # Complete 7-experiment research ablation specifications
+│   └── aws_data_collection_plan.md
+├── experiments/
+│   └── exp1_temporal_horizon.py # Reproducible Experiment 1 benchmark runner
+├── models/
+│   └── exp1/                    # Serialized model boosters (lgbm_1h..6h.txt) & metadata
+├── reports/
+│   └── exp1_temporal_horizon_results.json # JSON benchmark metrics & evaluation records
 ├── src/
 │   ├── core/                    # App configuration and logging
+│   ├── features/                # Modular feature engineering engine (kinematics, circadian)
+│   ├── models/                  # ViralModelTrainer with F1 threshold optimization
 │   ├── data_collection/         # YouTube API client & historical dataset bootstrapper
-│   ├── preprocessing/           # Data validation, cleaning, and anti-leakage checks
-│   ├── nlp/                     # VADER + DistilBERT sentiment ensemble & spam filters
-│   ├── feature_engineering/     # Temporal velocities, ratios, and target labeling
-│   ├── models/                  # Baselines, LightGBM/XGBoost, ablation runner
-│   ├── evaluation/              # PR-AUC, ROC-AUC, calibration & SHAP explainability
-│   └── api/                     # FastAPI application, routes, and schemas
-├── dashboard/                   # Streamlit web application & visualization components
-├── notebooks/                   # Exploratory analysis and experiment walkthroughs
-├── reports/                     # Generated evaluation reports, metrics, and SHAP plots
-├── tests/                       # Unit and integration test suite
-├── Dockerfile                   # Container definition
-├── docker-compose.yml           # Multi-service setup (API, Dashboard, Postgres)
+│   └── storage/                 # Database models & ORM
 ├── pyproject.toml               # Python package configuration
 ├── requirements.txt             # Project dependencies
 └── README.md                    # Project documentation
