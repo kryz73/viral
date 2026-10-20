@@ -5,3 +5,7 @@ viral.egg-info
 __pycache__/
 *.py[cod]
 *$py.class
+*.db
+data/
+mlruns/
+.pytest_cache/

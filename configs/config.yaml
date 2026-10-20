@@ -71,3 +71,15 @@ models:
 mlflow:
   tracking_uri: "sqlite:///./mlruns.db"
   experiment_name: "youtube_trending_ablation"
+
+crawler:
+  enabled: true
+  channel_poll_interval_hours: 2
+  snapshot_poll_interval_minutes: 10
+  comment_harvest_interval_minutes: 15
+  trending_check_interval_hours: 2
+  max_comments_per_video: 250
+  regions: ["US", "GB", "CA", "IN"]
+  target_categories: [10, 20, 24, 25, 28] # Music, Gaming, Entertainment, News, Tech
+  seed_channels_path: "configs/seed_channels.json"
+  s3_backup_interval_hours: 6

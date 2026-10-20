@@ -3,8 +3,10 @@ from typing import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, Session
 
+from src.core.config import settings
+
 # 1. Database Connection URL (SQLite default, easily swappable with Postgres)
-DATABASE_URL = "sqlite:///./data/viral.db"
+DATABASE_URL = settings.database_url or settings.database.url
 
 # 2. Ensure the parent directory exists for SQLite
 if DATABASE_URL.startswith("sqlite"):
