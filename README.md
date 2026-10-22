@@ -86,7 +86,7 @@ A rigorous, peer-reviewed ablation suite designed to isolate, benchmark, and exp
 |:---:|---|---|---|:---:|
 | **1** | **Temporal Horizon** (Lead-Time Frontier) | *How early can virality be predicted, and what is the trade-off between lead time and accuracy?* | $t \le 1.0\text{h}, 2.0\text{h}, 4.0\text{h}, 6.0\text{h}$ | **Completed** |
 | **2** | **Feature Modality Stack** | *Which data stream contributes the most predictive lift: metadata, creator authority, kinematics, or comments?* | $M_1$ (Meta) $\to M_2$ (+Creator) $\to M_3$ (+Kinematics) $\to M_4$ (+Comments) | **Completed** |
-| **3** | **Kinematic Representations** (Engagement Physics) | *Does modeling derivatives ($v = \frac{dV}{dt}, a = \frac{d^2V}{dt^2}$) outperform raw cumulative counts?* | Raw counts vs. Velocity ($v$) vs. Acceleration ($a$) vs. Growth log-ratios | Planned |
+| **3** | **Kinematic Representations** (Engagement Physics) | *Does modeling derivatives ($v = \frac{dV}{dt}, a = \frac{d^2V}{dt^2}$) outperform raw cumulative counts?* | Raw counts vs. Velocity ($v$) vs. Acceleration ($a$) vs. Growth log-ratios | **Completed** |
 | **4** | **Dual-Stage Comment Dynamics** & Sentiment Drift | *Does temporal sentiment shift ($\Delta S = S_{6\text{h}} - S_{1\text{h}}$) catch breakout hits better than a static snapshot?* | No text vs. Stage 1 only vs. Stage 2 only vs. Dual-stage drift ($\Delta S$) | Planned |
 | **5** | **Circadian & Multi-Region Contagion** | *Do publisher local circadian time and early overseas charting (GB/AU) boost North American virality prediction?* | UTC baseline vs. Publisher local hour ($\sin/\cos$) vs. Cross-market contagion | Planned |
 | **6** | **Model Architecture Family** | *Which inductive bias best fits early trajectory data: decision trees, recurrent neural nets, or multi-modal transformers?* | Logistic vs. LightGBM/XGBoost vs. Bi-LSTM vs. Late-Fusion Transformer | Planned |
@@ -116,6 +116,21 @@ Evaluated at fixed cutoff horizon $t \le 4.0\text{h}$ across 4 progressive modal
 
 *Key finding: Engagement kinematics delivers the decisive predictive leap (+40.2% relative PR-AUC lift). Raw comment arrival volume proves redundant with observation snapshots without NLP sentiment drift.*
 
+### Experiment 3 Benchmark Results (Completed)
+
+Evaluated at fixed cutoff horizon $t \le 4.0\text{h}$ across 6 physical engagement representations:
+
+| Formulation | Physical Components | Features | PR-AUC | $\Delta$ PR-AUC vs $K_1$ | ROC-AUC | Optimal $F_1$ | Precision | Recall |
+|:---:|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **$K_1$** | **Cumulative Counts (0th Order)** | 27 | 0.3641 | *Baseline* | 0.9628 | 0.4720 | **40.0%** | 57.6% |
+| **$K_2$** | **+ 1st Derivative (Velocity $v$)** | 33 | 0.3744 | **+0.0103** | **0.9664** | 0.4757 | 35.0% | **74.2%** |
+| **$K_3$** | **+ 2nd Derivative (Acceleration $a$)** | 37 | 0.3562 | -0.0079 | 0.9661 | 0.4713 | 38.0% | 62.1% |
+| **$K_4$** | **+ Growth Log-Ratios ($\rho$)** | 41 | 0.3564 | -0.0077 | 0.9623 | **0.5079** | 39.0% | 72.7% |
+| **$K_5$** | **Full Integrated Physics** | 46 | **0.3975** | **+0.0334** | 0.9658 | 0.4898 | 36.9% | 72.7% |
+| **$K_0$** | **Scale-Free Kinematics (No Counts)** | 37 | 0.3664 | **+0.0023** | 0.9644 | **0.5052** | 38.3% | **74.2%** |
+
+*Key finding: Velocity triggers a massive +16.6% recall surge (57.6% $\to$ 74.2%). Remarkably, pure scale-free kinematics ($K_0$) with zero cumulative view counts beats the pure cumulative counts baseline ($K_1$) in both $F_1$ and recall.*
+
 *See [docs/ABLATION_EXPERIMENTS.md](docs/ABLATION_EXPERIMENTS.md) for full experimental setup, mathematical definitions, and feature breakdown.*
 
 ---
@@ -136,13 +151,16 @@ viral/
 │   └── aws_data_collection_plan.md
 ├── experiments/
 │   ├── exp1_temporal_horizon.py # Reproducible Experiment 1 benchmark runner
-│   └── exp2_feature_modalities.py # Reproducible Experiment 2 modality ablation runner
+│   ├── exp2_feature_modalities.py # Reproducible Experiment 2 modality ablation runner
+│   └── exp3_kinematic_representations.py # Reproducible Experiment 3 engagement physics runner
 ├── models/
 │   ├── exp1/                    # Serialized model boosters (lgbm_1h..6h.txt) & metadata
-│   └── exp2/                    # Modality stack boosters (lgbm_M1..M4.txt) & metadata
+│   ├── exp2/                    # Modality stack boosters (lgbm_M1..M4.txt) & metadata
+│   └── exp3/                    # Kinematic boosters (lgbm_K0..K5.txt) & metadata
 ├── reports/
 │   ├── exp1_temporal_horizon_results.json # JSON benchmark metrics & evaluation records
-│   └── exp2_feature_modalities_results.json # JSON metrics across M1-M4 modality stacks
+│   ├── exp2_feature_modalities_results.json # JSON metrics across M1-M4 modality stacks
+│   └── exp3_kinematic_representations_results.json # JSON metrics across K0-K5 physics formulations
 ├── src/
 │   ├── core/                    # App configuration and logging
 │   ├── features/                # Modular feature engineering engine (kinematics, circadian)

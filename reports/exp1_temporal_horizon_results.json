@@ -4,7 +4,7 @@
   "train_size": 14510,
   "val_size": 3766,
   "test_size": 1958,
-  "runtime_seconds": 4.13,
+  "runtime_seconds": 4.74,
   "results": [
     {
       "horizon": "1h",
