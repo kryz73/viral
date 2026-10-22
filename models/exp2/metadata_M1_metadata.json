@@ -1,0 +1,43 @@
+{
+  "horizon": "M1_metadata",
+  "features_count": 16,
+  "best_iteration": 2,
+  "optimal_threshold": 0.0993,
+  "test_pr_auc": 0.2847,
+  "test_roc_auc": 0.9088,
+  "test_f1": 0.4352,
+  "test_precision": 0.3307,
+  "test_recall": 0.6364,
+  "test_brier": 0.03,
+  "median_lead_time_hours": 7.9,
+  "top_features": {
+    "duration_seconds": 17,
+    "title_caps_ratio": 7,
+    "circadian_sin": 7,
+    "circadian_cos": 7,
+    "title_word_count": 5,
+    "title_len": 5,
+    "tag_count": 4,
+    "category_id": 3,
+    "caption": 3,
+    "dow_sin": 1
+  },
+  "feature_names": [
+    "duration_seconds",
+    "is_short",
+    "category_id",
+    "title_len",
+    "title_word_count",
+    "title_caps_ratio",
+    "title_has_excl",
+    "title_has_quest",
+    "tag_count",
+    "definition",
+    "caption",
+    "licensed_content",
+    "circadian_sin",
+    "circadian_cos",
+    "dow_sin",
+    "dow_cos"
+  ]
+}

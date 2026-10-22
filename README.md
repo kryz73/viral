@@ -85,7 +85,7 @@ A rigorous, peer-reviewed ablation suite designed to isolate, benchmark, and exp
 | # | Experiment Title | Core Research Question | Setups / Variables | Status |
 |:---:|---|---|---|:---:|
 | **1** | **Temporal Horizon** (Lead-Time Frontier) | *How early can virality be predicted, and what is the trade-off between lead time and accuracy?* | $t \le 1.0\text{h}, 2.0\text{h}, 4.0\text{h}, 6.0\text{h}$ | **Completed** |
-| **2** | **Feature Modality Stack** | *Which data stream contributes the most predictive lift: metadata, creator authority, kinematics, or comments?* | $M_1$ (Meta) $\to M_2$ (+Creator) $\to M_3$ (+Kinematics) $\to M_4$ (+Comments) | **Ready** |
+| **2** | **Feature Modality Stack** | *Which data stream contributes the most predictive lift: metadata, creator authority, kinematics, or comments?* | $M_1$ (Meta) $\to M_2$ (+Creator) $\to M_3$ (+Kinematics) $\to M_4$ (+Comments) | **Completed** |
 | **3** | **Kinematic Representations** (Engagement Physics) | *Does modeling derivatives ($v = \frac{dV}{dt}, a = \frac{d^2V}{dt^2}$) outperform raw cumulative counts?* | Raw counts vs. Velocity ($v$) vs. Acceleration ($a$) vs. Growth log-ratios | Planned |
 | **4** | **Dual-Stage Comment Dynamics** & Sentiment Drift | *Does temporal sentiment shift ($\Delta S = S_{6\text{h}} - S_{1\text{h}}$) catch breakout hits better than a static snapshot?* | No text vs. Stage 1 only vs. Stage 2 only vs. Dual-stage drift ($\Delta S$) | Planned |
 | **5** | **Circadian & Multi-Region Contagion** | *Do publisher local circadian time and early overseas charting (GB/AU) boost North American virality prediction?* | UTC baseline vs. Publisher local hour ($\sin/\cos$) vs. Cross-market contagion | Planned |
@@ -102,6 +102,19 @@ Evaluated on an out-of-time test cohort of **20,234 matched videos** (post-fix c
 | **$t \le 2.0\text{h}$** | 34 | 0.3467 | 0.9588 | 0.4485 | 37.4% | 56.1% | **7.9 hours** |
 | **$t \le 4.0\text{h}$** | 41 | 0.3321 | 0.9604 | **0.5368** | **41.1%** | **77.3%** | **7.9 hours** |
 | **$t \le 6.0\text{h}$** | 49 | **0.4015** | **0.9664** | 0.5051 | 37.9% | 75.8% | **7.9 hours** |
+
+### Experiment 2 Benchmark Results (Completed)
+
+Evaluated at fixed cutoff horizon $t \le 4.0\text{h}$ across 4 progressive modality stacks:
+
+| Stack | Modality Included | Features | PR-AUC | $\Delta$ PR-AUC | ROC-AUC | Optimal $F_1$ | Precision | Recall |
+|:---:|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **$M_1$** | **Metadata Only** | 16 | **0.2847** | *Baseline* | 0.9088 | 0.4352 | 33.1% | 63.6% |
+| **$M_2$** | **+ Creator Authority** | 18 | **0.2810** | -0.0037 | 0.9117 | 0.4023 | 32.4% | 53.0% |
+| **$M_3$** | **+ Engagement Kinematics** | 35 | **0.3941** | **+0.1131** | **0.9644** | **0.4859** | **38.7%** | **65.2%** |
+| **$M_4$** | **+ Comments Arrival Dynamics** | 41 | **0.3315** | -0.0626 | 0.9626 | 0.4706 | 38.5% | 60.6% |
+
+*Key finding: Engagement kinematics delivers the decisive predictive leap (+40.2% relative PR-AUC lift). Raw comment arrival volume proves redundant with observation snapshots without NLP sentiment drift.*
 
 *See [docs/ABLATION_EXPERIMENTS.md](docs/ABLATION_EXPERIMENTS.md) for full experimental setup, mathematical definitions, and feature breakdown.*
 
@@ -122,11 +135,14 @@ viral/
 │   ├── ABLATION_EXPERIMENTS.md  # Complete 7-experiment research ablation specifications
 │   └── aws_data_collection_plan.md
 ├── experiments/
-│   └── exp1_temporal_horizon.py # Reproducible Experiment 1 benchmark runner
+│   ├── exp1_temporal_horizon.py # Reproducible Experiment 1 benchmark runner
+│   └── exp2_feature_modalities.py # Reproducible Experiment 2 modality ablation runner
 ├── models/
-│   └── exp1/                    # Serialized model boosters (lgbm_1h..6h.txt) & metadata
+│   ├── exp1/                    # Serialized model boosters (lgbm_1h..6h.txt) & metadata
+│   └── exp2/                    # Modality stack boosters (lgbm_M1..M4.txt) & metadata
 ├── reports/
-│   └── exp1_temporal_horizon_results.json # JSON benchmark metrics & evaluation records
+│   ├── exp1_temporal_horizon_results.json # JSON benchmark metrics & evaluation records
+│   └── exp2_feature_modalities_results.json # JSON metrics across M1-M4 modality stacks
 ├── src/
 │   ├── core/                    # App configuration and logging
 │   ├── features/                # Modular feature engineering engine (kinematics, circadian)
