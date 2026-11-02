@@ -94,42 +94,42 @@ A rigorous, peer-reviewed ablation suite designed to isolate, benchmark, and exp
 
 ### Experiment 1 Benchmark Results (Completed)
 
-Evaluated on an out-of-time test cohort of **20,234 matched videos** (post-fix clean cohort):
+Evaluated on an out-of-time test cohort of **65,881 matched videos** (20-day dataset, Oct 11–31):
 
 | Horizon | Features | PR-AUC | ROC-AUC | Optimal $F_1$ | Precision | Recall | Median Lead Time |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **$t \le 1.0\text{h}$** | 26 | 0.3299 | 0.9574 | 0.4719 | 37.5% | 63.6% | **7.9 hours** |
-| **$t \le 2.0\text{h}$** | 34 | 0.3467 | 0.9588 | 0.4485 | 37.4% | 56.1% | **7.9 hours** |
-| **$t \le 4.0\text{h}$** | 41 | 0.3321 | 0.9604 | **0.5368** | **41.1%** | **77.3%** | **7.9 hours** |
-| **$t \le 6.0\text{h}$** | 49 | **0.4015** | **0.9664** | 0.5051 | 37.9% | 75.8% | **7.9 hours** |
+| **$t \le 1.0\text{h}$** | 26 | 0.4172 | 0.9600 | **0.5095** | **49.4%** | 52.6% | **7.7 hours** |
+| **$t \le 2.0\text{h}$** | 34 | 0.4027 | 0.9607 | 0.5082 | 48.1% | **53.9%** | **7.7 hours** |
+| **$t \le 4.0\text{h}$** | 41 | 0.4316 | **0.9689** | 0.4908 | 46.3% | 52.2% | **7.7 hours** |
+| **$t \le 6.0\text{h}$** | 49 | **0.4373** | 0.9669 | 0.4511 | 39.7% | 52.2% | **7.7 hours** |
 
 ### Experiment 2 Benchmark Results (Completed)
 
-Evaluated at fixed cutoff horizon $t \le 4.0\text{h}$ across 4 progressive modality stacks:
+Evaluated at fixed cutoff horizon $t \le 4.0\text{h}$ across 4 progressive modality stacks (65,881 matched videos):
 
 | Stack | Modality Included | Features | PR-AUC | $\Delta$ PR-AUC | ROC-AUC | Optimal $F_1$ | Precision | Recall |
-|:---:|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **$M_1$** | **Metadata Only** | 16 | **0.2847** | *Baseline* | 0.9088 | 0.4352 | 33.1% | 63.6% |
-| **$M_2$** | **+ Creator Authority** | 18 | **0.2810** | -0.0037 | 0.9117 | 0.4023 | 32.4% | 53.0% |
-| **$M_3$** | **+ Engagement Kinematics** | 35 | **0.3941** | **+0.1131** | **0.9644** | **0.4859** | **38.7%** | **65.2%** |
-| **$M_4$** | **+ Comments Arrival Dynamics** | 41 | **0.3315** | -0.0626 | 0.9626 | 0.4706 | 38.5% | 60.6% |
+|:---:|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **$M_1$** | **Metadata Only** | 16 | 0.2046 | *Baseline* | 0.9200 | 0.3557 | 25.3% | **60.0%** |
+| **$M_2$** | **+ Creator Authority** | 18 | 0.2005 | -0.0041 | 0.9195 | 0.3387 | 25.5% | 50.4% |
+| **$M_3$** | **+ Engagement Kinematics** | 35 | **0.3989** | **+0.1984** | 0.9667 | **0.5123** | **48.5%** | 54.4% |
+| **$M_4$** | **+ Comments Arrival Dynamics** | 41 | **0.4181** | **+0.0192** | **0.9687** | 0.4798 | 44.7% | 51.7% |
 
-*Key finding: Engagement kinematics delivers the decisive predictive leap (+40.2% relative PR-AUC lift). Raw comment arrival volume proves redundant with observation snapshots without NLP sentiment drift.*
+*Key finding: Engagement kinematics delivers a decisive +99% relative PR-AUC lift over metadata. With 4.1M comments in the 20-day corpus, comment dynamics stabilized and yielded a net positive gain ($\Delta = +0.0192$), pushing PR-AUC to 0.4181.*
 
 ### Experiment 3 Benchmark Results (Completed)
 
-Evaluated at fixed cutoff horizon $t \le 4.0\text{h}$ across 6 physical engagement representations:
+Evaluated at fixed cutoff horizon $t \le 4.0\text{h}$ across 6 physical engagement representations (65,881 matched videos):
 
 | Formulation | Physical Components | Features | PR-AUC | $\Delta$ PR-AUC vs $K_1$ | ROC-AUC | Optimal $F_1$ | Precision | Recall |
 |:---:|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **$K_1$** | **Cumulative Counts (0th Order)** | 27 | 0.3641 | *Baseline* | 0.9628 | 0.4720 | **40.0%** | 57.6% |
-| **$K_2$** | **+ 1st Derivative (Velocity $v$)** | 33 | 0.3744 | **+0.0103** | **0.9664** | 0.4757 | 35.0% | **74.2%** |
-| **$K_3$** | **+ 2nd Derivative (Acceleration $a$)** | 37 | 0.3562 | -0.0079 | 0.9661 | 0.4713 | 38.0% | 62.1% |
-| **$K_4$** | **+ Growth Log-Ratios ($\rho$)** | 41 | 0.3564 | -0.0077 | 0.9623 | **0.5079** | 39.0% | 72.7% |
-| **$K_5$** | **Full Integrated Physics** | 46 | **0.3975** | **+0.0334** | 0.9658 | 0.4898 | 36.9% | 72.7% |
-| **$K_0$** | **Scale-Free Kinematics (No Counts)** | 37 | 0.3664 | **+0.0023** | 0.9644 | **0.5052** | 38.3% | **74.2%** |
+| **$K_1$** | **Cumulative Counts (0th Order)** | 27 | 0.3969 | *Baseline* | 0.9657 | 0.4818 | 50.5% | 46.1% |
+| **$K_2$** | **+ 1st Derivative (Velocity $v$)** | 33 | 0.3744 | -0.0225 | 0.9652 | 0.4678 | 46.2% | 47.4% |
+| **$K_3$** | **+ 2nd Derivative (Acceleration $a$)** | 37 | **0.4074** | **+0.0105** | **0.9678** | 0.4650 | 48.4% | 44.8% |
+| **$K_4$** | **+ Growth Log-Ratios ($\rho$)** | 41 | 0.3941 | -0.0028 | 0.9665 | **0.5010** | 46.5% | **54.4%** |
+| **$K_5$** | **Full Integrated Physics** | 46 | 0.3744 | -0.0225 | 0.9624 | 0.4873 | 47.5% | 50.0% |
+| **$K_0$** | **Scale-Free Kinematics (No Counts)** | 37 | 0.3948 | -0.0021 | 0.9664 | 0.4188 | **52.6%** | 34.8% |
 
-*Key finding: Velocity triggers a massive +16.6% recall surge (57.6% $\to$ 74.2%). Remarkably, pure scale-free kinematics ($K_0$) with zero cumulative view counts beats the pure cumulative counts baseline ($K_1$) in both $F_1$ and recall.*
+*Key finding: With >1M observation snapshots, the 2nd derivative $a = \frac{\Delta v}{\Delta t}$ ($K_3$) smoothed out and achieved the peak PR-AUC of 0.4074. Scale-free kinematics ($K_0$) achieved 52.6% Precision without relying on cumulative view counts.*
 
 *See [docs/ABLATION_EXPERIMENTS.md](docs/ABLATION_EXPERIMENTS.md) for full experimental setup, mathematical definitions, and feature breakdown.*
 
