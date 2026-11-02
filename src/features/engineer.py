@@ -15,17 +15,21 @@ def clean_videos_and_cohort(
     df_t: pd.DataFrame,
     seed_file: str,
     start_date: str = "2026-10-11T00:00:00Z",
-    end_date: str = "2026-10-17T18:00:00Z",
+    end_date: str = "2026-10-31T00:00:00Z",
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, pd.DataFrame]]:
     """Clean video corpus and extract a matched cohort with valid observations across 1h, 2h, 4h, 6h."""
     # 1. Filter videos
+    t_start = pd.to_datetime(start_date, utc=True)
+    t_end = pd.to_datetime(end_date, utc=True) if end_date else None
+
     mask = (
-        (df_v["published_at"] >= start_date)
-        & (df_v["published_at"] <= end_date)
+        (df_v["published_at"] >= t_start)
         & (df_v["category_id"] != 25)
         & (df_v["live_broadcast_content"] == "none")
         & (df_v["tracked_from_birth"] == True)
     )
+    if t_end is not None:
+        mask = mask & (df_v["published_at"] <= t_end)
     df_v_clean = df_v[mask].copy().sort_values("published_at").reset_index(drop=True)
 
     # 2. Channel tier mapping from seed_channels.json

@@ -12,6 +12,7 @@ Persists all 4 trained model artifacts and evaluation metadata into models/exp1/
 
 import os
 import sys
+import glob
 import json
 import time
 import numpy as np
@@ -26,19 +27,30 @@ from src.models.trainer import ViralModelTrainer
 
 def main():
     start_time = time.time()
-    data_dir = "/home/kryz/dev/harvest/data/export/partition_date=2026-10-20"
-    v_file = os.path.join(data_dir, "videos_all_20261020_095610.parquet")
-    o_file = os.path.join(data_dir, "observations_all_20261020_095610.parquet")
-    c_file = os.path.join(data_dir, "comments_all_20261020_095610.parquet")
-    t_file = os.path.join(data_dir, "trending_events_all_20261020_095610.parquet")
+    
+    # 1. Locate latest Parquet export directory (try data/raw symlink first)
+    raw_dir = "/home/kryz/dev/viral/data/raw"
+    if not os.path.exists(raw_dir) or not glob.glob(f"{raw_dir}/videos_all_*.parquet"):
+        raw_dir = "/home/kryz/dev/harvest/data/export/partition_date=2026-11-02"
+
+    v_file = sorted(glob.glob(os.path.join(raw_dir, "videos_all_*.parquet")))[-1]
+    o_file = sorted(glob.glob(os.path.join(raw_dir, "observations_all_*.parquet")))[-1]
+    c_file = sorted(glob.glob(os.path.join(raw_dir, "comments_all_*.parquet")))[-1]
+    t_file = sorted(glob.glob(os.path.join(raw_dir, "trending_events_all_*.parquet")))[-1]
     seed_file = "/home/kryz/dev/viral/configs/seed_channels.json"
 
     print("=" * 75)
     print("STEP 1: LOADING & CLEANING MATCHED COHORT")
     print("=" * 75)
+    print(f"Data source: {raw_dir}")
+    print(f"  Videos:       {os.path.basename(v_file)}")
+    print(f"  Observations: {os.path.basename(o_file)}")
+    print(f"  Comments:     {os.path.basename(c_file)}")
+    print(f"  Trending:     {os.path.basename(t_file)}")
+
     df_v = pd.read_parquet(v_file)
     df_o = pd.read_parquet(o_file)
-    df_c = pd.read_parquet(c_file)
+    df_c = pd.read_parquet(c_file, columns=['comment_id', 'video_id', 'published_at', 'text', 'like_count', 'elapsed_minutes'])
     df_t = pd.read_parquet(t_file)
 
     df_v['published_at'] = pd.to_datetime(df_v['published_at'], utc=True)
@@ -47,7 +59,9 @@ def main():
     df_t['captured_at'] = pd.to_datetime(df_t['captured_at'], utc=True)
 
     df_v_matched, df_o_clean, df_c_clean, cp_dict = clean_videos_and_cohort(
-        df_v, df_o, df_c, df_t, seed_file=seed_file
+        df_v, df_o, df_c, df_t, seed_file=seed_file,
+        start_date="2026-10-11T00:00:00Z",
+        end_date="2026-10-31T00:00:00Z"
     )
     print(f"Matched cohort with valid data at all 4 horizons (1h, 2h, 4h, 6h): {len(df_v_matched):,}")
     print(f"Trending in matched cohort: {df_v_matched['ever_trended'].sum():,} ({df_v_matched['ever_trended'].mean()*100:.2f}%)")
@@ -59,20 +73,24 @@ def main():
     for h_name, cols in horizons.items():
         print(f"  Horizon {h_name:2s}: {len(cols):2d} features")
 
-    # Chronological Split (No lookahead)
-    train_mask = (df_v_matched['published_at'] < '2026-10-16T00:00:00Z').values
+    # Chronological Split (70% Train, 15% Validation, 15% Test)
+    dates = df_v_matched['published_at'].sort_values()
+    t_val = dates.quantile(0.70)
+    t_test = dates.quantile(0.85)
+
+    train_mask = (df_v_matched['published_at'] < t_val).values
     val_mask = (
-        (df_v_matched['published_at'] >= '2026-10-16T00:00:00Z')
-        & (df_v_matched['published_at'] < '2026-10-17T00:00:00Z')
+        (df_v_matched['published_at'] >= t_val)
+        & (df_v_matched['published_at'] < t_test)
     ).values
-    test_mask = (df_v_matched['published_at'] >= '2026-10-17T00:00:00Z').values
+    test_mask = (df_v_matched['published_at'] >= t_test).values
 
     print("\n" + "=" * 75)
     print("STEP 3: CHRONOLOGICAL DATA SPLIT")
     print("=" * 75)
-    print(f"Train Cohort (Oct 11 - 15): {np.sum(train_mask):,} videos | Trending: {np.sum(df_v_matched['ever_trended'].values[train_mask]):,} ({np.mean(df_v_matched['ever_trended'].values[train_mask])*100:.2f}%)")
-    print(f"Validation Cohort (Oct 16):  {np.sum(val_mask):,} videos | Trending: {np.sum(df_v_matched['ever_trended'].values[val_mask]):,} ({np.mean(df_v_matched['ever_trended'].values[val_mask])*100:.2f}%)")
-    print(f"Test Cohort (Oct 17):        {np.sum(test_mask):,} videos | Trending: {np.sum(df_v_matched['ever_trended'].values[test_mask]):,} ({np.mean(df_v_matched['ever_trended'].values[test_mask])*100:.2f}%)")
+    print(f"Train Cohort (< {t_val.strftime('%b %d %H:%M')}):     {np.sum(train_mask):,} videos | Trending: {np.sum(df_v_matched['ever_trended'].values[train_mask]):,} ({np.mean(df_v_matched['ever_trended'].values[train_mask])*100:.2f}%)")
+    print(f"Validation Cohort ({t_val.strftime('%b %d')} - {t_test.strftime('%b %d')}): {np.sum(val_mask):,} videos | Trending: {np.sum(df_v_matched['ever_trended'].values[val_mask]):,} ({np.mean(df_v_matched['ever_trended'].values[val_mask])*100:.2f}%)")
+    print(f"Test Cohort (>= {t_test.strftime('%b %d %H:%M')}):    {np.sum(test_mask):,} videos | Trending: {np.sum(df_v_matched['ever_trended'].values[test_mask]):,} ({np.mean(df_v_matched['ever_trended'].values[test_mask])*100:.2f}%)")
 
     print("\n" + "=" * 75)
     print("STEP 4: TRAINING & SERIALIZING MODELS TO models/exp1/")
